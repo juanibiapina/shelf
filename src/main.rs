@@ -1,7 +1,8 @@
 #![feature(with_options)]
 
-use structopt::StructOpt;
 use failure::Error;
+use serde::{Serialize, Deserialize};
+use structopt::StructOpt;
 
 use std::collections::HashMap;
 use std::fs::File;
@@ -27,6 +28,13 @@ enum Command {
     },
 }
 
+#[derive(Serialize, Deserialize)]
+#[serde(untagged)]
+enum Store {
+    Value(String),
+    Map(HashMap<String, Store>),
+}
+
 fn config_file_path(args: &Args) -> Result<PathBuf, Error> {
     match args.config_file {
         Some(ref path) => {
@@ -40,16 +48,16 @@ fn config_file_path(args: &Args) -> Result<PathBuf, Error> {
     }
 }
 
-fn read_config(args: &Args) -> Result<HashMap<String, String>, Error> {
+fn read_config(args: &Args) -> Result<Store, Error> {
     let config_path = config_file_path(args)?;
 
     match File::open(config_path) {
         Ok(file) => Ok(serde_yaml::from_reader(file)?),
-        Err(_) => Ok(HashMap::new()),
+        Err(_) => Ok(Store::Map(HashMap::new())),
     }
 }
 
-fn write_config(args: &Args, data: &HashMap<String, String>) -> Result<(), Error> {
+fn write_config(args: &Args, data: &Store) -> Result<(), Error> {
     let config_path = config_file_path(args)?;
 
     let file = File::create(config_path)?;
@@ -66,7 +74,10 @@ fn actual_main() -> Result<(), Error> {
         Command::Add { ref key, ref value } => {
             let mut data = read_config(&args)?;
 
-            data.insert(key.to_owned(), value.to_owned());
+            match data {
+                Store::Value(_) => panic!("Invalid configuration file"),
+                Store::Map(ref mut data) => { data.insert(key.to_owned(), Store::Value(value.to_owned())) },
+            };
 
             write_config(&args, &data)?;
 
@@ -74,10 +85,20 @@ fn actual_main() -> Result<(), Error> {
         Command::Get { ref key } => {
             let data = read_config(&args)?;
 
-            match data.get(key) {
-                Some(value) => println!("{}", value),
-                None => {},
-            }
+            match data {
+                Store::Value(_) => panic!("Invalid configuration file"),
+                Store::Map(data) => {
+                    match data.get(key) {
+                        Some(value) => {
+                            match value {
+                                Store::Value(value) => println!("{}", value),
+                                Store::Map(_) => panic!("Invalid configuration file"),
+                            }
+                        },
+                        None => {},
+                    }
+                },
+            };
         }
     }
 

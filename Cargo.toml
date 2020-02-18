@@ -8,6 +8,8 @@ edition = "2018"
 
 [dependencies]
 failure = "*"
+serde = { version = "*", features = ["derive"] }
+serde_yaml = "*"
 structopt = "*"
 xdg = "*"
 

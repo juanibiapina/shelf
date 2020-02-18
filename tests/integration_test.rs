@@ -11,7 +11,9 @@ fn add_and_list_items() {
         .arg("-c")
         .arg(config_file.path())
         .arg("add")
-        .arg("entry 1")
+        .arg("level 1")
+        .arg("level 2")
+        .arg("value")
         .assert()
         .success();
 
@@ -20,6 +22,7 @@ fn add_and_list_items() {
         .arg(config_file.path())
         .arg("add")
         .arg("entry 2")
+        .arg("false")
         .assert()
         .success();
 
@@ -29,5 +32,5 @@ fn add_and_list_items() {
         .arg("list")
         .assert()
         .success()
-        .stdout("entry 1\nentry 2\n");
+        .stdout("level 1,level 2,value\nentry 2,false\n");
 }

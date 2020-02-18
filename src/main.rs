@@ -20,7 +20,7 @@ struct Args {
 #[derive(StructOpt, Debug)]
 enum Command {
     Add {
-        message: String,
+        entries: Vec<String>,
     },
     List,
 }
@@ -42,10 +42,10 @@ fn actual_main() -> Result<(), Error> {
     let args = Args::from_args();
 
     match args.cmd {
-        Command::Add { ref message } => {
+        Command::Add { ref entries } => {
             let config_path = config_file_path(&args)?;
             let mut file = File::with_options().create(true).append(true).open(config_path).context("Couldn't create config file")?;
-            writeln!(&mut file, "{}", message)?;
+            writeln!(&mut file, "{}", entries.join(","))?;
 
         },
         Command::List => {

@@ -11,8 +11,7 @@ fn add_and_list_items() {
         .arg("-c")
         .arg(config_file.path())
         .arg("add")
-        .arg("entry")
-        .arg("1")
+        .arg("entry 1")
         .assert()
         .success();
 
@@ -43,9 +42,7 @@ fn filter_items_by_tag() {
         .arg("-c")
         .arg(config_file.path())
         .arg("add")
-        .arg("entry")
-        .arg("1")
-        .arg("#tag1")
+        .arg("entry 1 #tag1")
         .assert()
         .success();
 
@@ -53,8 +50,7 @@ fn filter_items_by_tag() {
         .arg("-c")
         .arg(config_file.path())
         .arg("add")
-        .arg("#tag2")
-        .arg("entry 2")
+        .arg("#tag2 entry 2")
         .assert()
         .success();
 

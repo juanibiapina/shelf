@@ -3,10 +3,9 @@
 use structopt::StructOpt;
 use failure::{Error, ResultExt};
 
-use std::fs::File;
 use std::fs;
-use std::io::BufRead;
-use std::io::BufReader;
+use std::fs::File;
+use std::io::Read;
 use std::io::Write;
 use std::path::PathBuf;
 
@@ -23,10 +22,7 @@ enum Command {
     Add {
         message: String,
     },
-    List {
-        #[structopt(short)]
-        tag_filter: Option<String>
-    }
+    List,
 }
 
 fn config_file_path(args: &Args) -> Result<PathBuf, Error> {
@@ -52,22 +48,14 @@ fn actual_main() -> Result<(), Error> {
             writeln!(&mut file, "{}", message)?;
 
         },
-        Command::List { ref tag_filter } => {
+        Command::List => {
             let config_path = config_file_path(&args)?;
-            let file = BufReader::new(File::open(config_path).context("Couldn't read config file")?);
+            let mut file = File::open(config_path).context("Couldn't read config file")?;
 
-            for line in file.lines() {
-                let line = line?;
+            let mut buffer = String::new();
+            file.read_to_string(&mut buffer)?;
 
-                match tag_filter {
-                    Some(tag) => {
-                        if line.contains(&format!("#{}", tag)) {
-                            println!("{}", line)
-                        }
-                    },
-                    None => { println!("{}", line) },
-                }
-            }
+            print!("{}", buffer);
         }
     }
 

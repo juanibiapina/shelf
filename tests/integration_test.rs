@@ -40,6 +40,27 @@ fn add_and_get_items() {
 }
 
 #[test]
+fn add_with_overwrites() {
+    let temp = assert_fs::TempDir::new().unwrap();
+    let config_file = temp.child("foo.yml");
+
+    let c = Context { config_file_path: config_file.path().to_str().unwrap().to_owned() };
+
+    assert(&c, &["add", "a", "b", "c", "d", "e"])
+        .success();
+
+    assert(&c, &["add", "a", "b", "c" ])
+        .success();
+
+    assert(&c, &["add", "a", "b", "c", "d"])
+        .success();
+
+    assert(&c, &["get", "a", "b", "c"])
+        .success()
+        .stdout("d\n");
+}
+
+#[test]
 fn get_a_map() {
     let temp = assert_fs::TempDir::new().unwrap();
     let config_file = temp.child("foo.yml");

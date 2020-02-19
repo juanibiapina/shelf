@@ -83,10 +83,14 @@ fn actual_main() -> Result<(), Error> {
             for key in keys {
                 match current {
                     Store::Value(_) => {
-                        return Err(format_err!("Invalid path"))
+                        unreachable!()
                     },
                     Store::Map(ref mut data) => {
-                        if !data.contains_key(key) {
+                        if data.contains_key(key) {
+                            if let Store::Value(_) = data.get(key).unwrap() {
+                                data.insert(key.to_owned(), Store::Map(BTreeMap::new()));
+                            }
+                        } else {
                             data.insert(key.to_owned(), Store::Map(BTreeMap::new()));
                         }
 
@@ -97,7 +101,7 @@ fn actual_main() -> Result<(), Error> {
 
             match current {
                 Store::Value(_) => {
-                    return Err(format_err!("Invalid path"))
+                    unreachable!()
                 },
                 Store::Map(ref mut data) => {
                     data.insert(values.get(0).unwrap().to_owned(), Store::Value(values.get(1).unwrap().to_owned()));

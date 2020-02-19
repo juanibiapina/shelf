@@ -6,7 +6,7 @@ use failure::Error;
 use serde::{Serialize, Deserialize};
 use structopt::StructOpt;
 
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 use std::fs::File;
 use std::path::PathBuf;
 use std::process;
@@ -34,7 +34,7 @@ enum Command {
 #[serde(untagged)]
 enum Store {
     Value(String),
-    Map(HashMap<String, Store>),
+    Map(BTreeMap<String, Store>),
 }
 
 fn config_file_path(args: &Args) -> Result<PathBuf, Error> {
@@ -55,7 +55,7 @@ fn read_config(args: &Args) -> Result<Store, Error> {
 
     match File::open(config_path) {
         Ok(file) => Ok(serde_yaml::from_reader(file)?),
-        Err(_) => Ok(Store::Map(HashMap::new())),
+        Err(_) => Ok(Store::Map(BTreeMap::new())),
     }
 }
 
@@ -87,7 +87,7 @@ fn actual_main() -> Result<(), Error> {
                     },
                     Store::Map(ref mut data) => {
                         if !data.contains_key(key) {
-                            data.insert(key.to_owned(), Store::Map(HashMap::new()));
+                            data.insert(key.to_owned(), Store::Map(BTreeMap::new()));
                         }
 
                         current = data.get_mut(key).unwrap()

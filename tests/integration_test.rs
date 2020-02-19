@@ -53,5 +53,5 @@ fn add_and_get_items() {
         .arg("group")
         .assert()
         .success()
-        .stdout("key\tvalue\nentry 2\tword\n");
+        .stdout("entry 2\tword\nkey\tvalue\n");
 }

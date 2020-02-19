@@ -26,7 +26,6 @@ enum Command {
         values: Vec<String>,
     },
     Get {
-        #[structopt(min_values(1), required(true))]
         keys: Vec<String>,
     },
 }
@@ -126,7 +125,14 @@ fn actual_main() -> Result<(), Error> {
 
             match result {
                 Store::Value(v) => println!("{}", v),
-                Store::Map(_) => unimplemented!(),
+                Store::Map(data) => {
+                    data.iter().for_each(|(key, value)| {
+                        println!("{}\t{}", key, match value {
+                            Store::Value(v) => v,
+                            Store::Map(_) => "...",
+                        });
+                    });
+                },
             };
         }
     }

@@ -45,4 +45,13 @@ fn add_and_get_items() {
         .assert()
         .success()
         .stdout("word\n");
+
+    Command::cargo_bin("shelf").unwrap()
+        .arg("-c")
+        .arg(config_file.path())
+        .arg("get")
+        .arg("group")
+        .assert()
+        .success()
+        .stdout("key\tvalue\nentry 2\tword\n");
 }

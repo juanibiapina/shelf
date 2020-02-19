@@ -1,5 +1,7 @@
 #![feature(with_options)]
 
+#[macro_use] extern crate failure;
+
 use failure::Error;
 use serde::{Serialize, Deserialize};
 use structopt::StructOpt;
@@ -20,11 +22,12 @@ struct Args {
 #[derive(StructOpt, Debug)]
 enum Command {
     Add {
-        key: String,
-        value: String,
+        #[structopt(min_values(3), required(true))]
+        values: Vec<String>,
     },
     Get {
-        key: String,
+        #[structopt(min_values(1), required(true))]
+        keys: Vec<String>,
     },
 }
 
@@ -71,33 +74,59 @@ fn actual_main() -> Result<(), Error> {
     let args = Args::from_args();
 
     match args.cmd {
-        Command::Add { ref key, ref value } => {
+        Command::Add { ref values } => {
             let mut data = read_config(&args)?;
 
-            match data {
-                Store::Value(_) => panic!("Invalid configuration file"),
-                Store::Map(ref mut data) => { data.insert(key.to_owned(), Store::Value(value.to_owned())) },
-            };
+            let mut current = &mut data;
+
+            let (keys, values) = values.split_at(values.len() - 2);
+
+            for key in keys {
+                match current {
+                    Store::Value(_) => {
+                        return Err(format_err!("Invalid path"))
+                    },
+                    Store::Map(ref mut data) => {
+                        if !data.contains_key(key) {
+                            data.insert(key.to_owned(), Store::Map(HashMap::new()));
+                        }
+
+                        current = data.get_mut(key).unwrap()
+                    },
+                }
+            }
+
+            match current {
+                Store::Value(_) => {
+                    return Err(format_err!("Invalid path"))
+                },
+                Store::Map(ref mut data) => {
+                    data.insert(values.get(0).unwrap().to_owned(), Store::Value(values.get(1).unwrap().to_owned()));
+                },
+            }
 
             write_config(&args, &data)?;
-
         },
-        Command::Get { ref key } => {
+        Command::Get { ref keys } => {
             let data = read_config(&args)?;
 
-            match data {
-                Store::Value(_) => panic!("Invalid configuration file"),
-                Store::Map(data) => {
-                    match data.get(key) {
-                        Some(value) => {
-                            match value {
-                                Store::Value(value) => println!("{}", value),
-                                Store::Map(_) => panic!("Invalid configuration file"),
-                            }
-                        },
-                        None => {},
-                    }
-                },
+            let mut result = &data;
+
+            for key in keys {
+                result = match result {
+                    Store::Value(_) => return Err(format_err!("Invalid path")),
+                    Store::Map(data) => {
+                        match data.get(key) {
+                            Some(v) => v,
+                            None => return Err(format_err!("Entry not found")),
+                        }
+                    },
+                }
+            }
+
+            match result {
+                Store::Value(v) => println!("{}", v),
+                Store::Map(_) => unimplemented!(),
             };
         }
     }

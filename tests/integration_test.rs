@@ -38,3 +38,25 @@ fn add_and_get_items() {
         .success()
         .stdout("entry 2\tword\nkey\tvalue\n");
 }
+
+#[test]
+fn get_a_map() {
+    let temp = assert_fs::TempDir::new().unwrap();
+    let config_file = temp.child("foo.yml");
+
+    let c = Context { config_file_path: config_file.path().to_str().unwrap().to_owned() };
+
+    assert(&c, &["add", "a", "b", "c"])
+        .success();
+
+    assert(&c, &["add", "a", "d", "e"])
+        .success();
+
+    assert(&c, &["get"])
+        .success()
+        .stdout("a\t...\n");
+
+    assert(&c, &["get", "a"])
+        .success()
+        .stdout("b\tc\nd\te\n");
+}

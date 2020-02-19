@@ -1,57 +1,40 @@
 use assert_cmd::Command;
 use assert_fs::prelude::*;
 
+struct Context {
+    config_file_path: String,
+}
+
+fn assert(c: &Context, args: &[&str]) -> assert_cmd::assert::Assert {
+    Command::cargo_bin("shelf").unwrap()
+        .arg("-c")
+        .arg(&c.config_file_path)
+        .args(args)
+        .assert()
+}
+
 #[test]
 fn add_and_get_items() {
     let temp = assert_fs::TempDir::new().unwrap();
     let config_file = temp.child("foo.yml");
 
-    Command::cargo_bin("shelf").unwrap()
-        .arg("-c")
-        .arg(config_file.path())
-        .arg("add")
-        .arg("group")
-        .arg("key")
-        .arg("value")
-        .assert()
+    let c = Context { config_file_path: config_file.path().to_str().unwrap().to_owned() };
+
+    assert(&c, &["add", "group", "key", "value"])
         .success();
 
-    Command::cargo_bin("shelf").unwrap()
-        .arg("-c")
-        .arg(config_file.path())
-        .arg("add")
-        .arg("group")
-        .arg("entry 2")
-        .arg("word")
-        .assert()
+    assert(&c, &["add", "group", "entry 2", "word"])
         .success();
 
-    Command::cargo_bin("shelf").unwrap()
-        .arg("-c")
-        .arg(config_file.path())
-        .arg("get")
-        .arg("group")
-        .arg("key")
-        .assert()
+    assert(&c, &["get", "group", "key"])
         .success()
         .stdout("value\n");
 
-    Command::cargo_bin("shelf").unwrap()
-        .arg("-c")
-        .arg(config_file.path())
-        .arg("get")
-        .arg("group")
-        .arg("entry 2")
-        .assert()
+    assert(&c, &["get", "group", "entry 2"])
         .success()
         .stdout("word\n");
 
-    Command::cargo_bin("shelf").unwrap()
-        .arg("-c")
-        .arg(config_file.path())
-        .arg("get")
-        .arg("group")
-        .assert()
+    assert(&c, &["get", "group"])
         .success()
         .stdout("entry 2\tword\nkey\tvalue\n");
 }

@@ -1,5 +1,3 @@
-#![feature(with_options)]
-
 #[macro_use] extern crate failure;
 
 use failure::Error;

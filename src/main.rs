@@ -19,10 +19,12 @@ struct Args {
 
 #[derive(StructOpt, Debug)]
 enum Command {
+    #[structopt(about = "Add a mapping to the store")]
     Add {
         #[structopt(min_values(3), required(true))]
         values: Vec<String>,
     },
+    #[structopt(about = "Get a mapping from the store")]
     Get {
         keys: Vec<String>,
     },

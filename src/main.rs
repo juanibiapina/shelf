@@ -28,6 +28,10 @@ enum Command {
     Get {
         keys: Vec<String>,
     },
+    #[structopt(about = "Remove a mapping from the store")]
+    Remove {
+        keys: Vec<String>,
+    }
 }
 
 #[derive(Serialize, Deserialize)]
@@ -138,7 +142,38 @@ fn actual_main() -> Result<(), Error> {
                     });
                 },
             };
-        }
+        },
+        Command::Remove { ref keys } => {
+            let mut data = read_config(&args)?;
+
+            let (keys, last) = keys.split_at(keys.len() - 1);
+
+            let mut current = &mut data;
+
+            for key in keys {
+                current = match current {
+                    Store::Value(_) => return Err(format_err!("Invalid path")),
+                    Store::Map(ref mut data) => {
+                        match data.get_mut(key) {
+                            Some(v) => v,
+                            None => return Err(format_err!("Entry not found")),
+                        }
+                    },
+                }
+            }
+
+            match current {
+                Store::Value(_) => return Err(format_err!("Invalid path")),
+                Store::Map(ref mut data) => {
+                    match data.remove(last.get(0).unwrap()) {
+                        Some(_) => {},
+                        None => return Err(format_err!("Entry not found")),
+                    }
+                },
+            };
+
+            write_config(&args, &data)?;
+        },
     }
 
     Ok(())

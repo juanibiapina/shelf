@@ -81,3 +81,24 @@ fn get_a_map() {
         .success()
         .stdout("b\tc\nd\te\n");
 }
+
+#[test]
+fn remove_items() {
+    let temp = assert_fs::TempDir::new().unwrap();
+    let config_file = temp.child("foo.yml");
+
+    let c = Context { config_file_path: config_file.path().to_str().unwrap().to_owned() };
+
+    assert(&c, &["add", "group", "a", "a"])
+        .success();
+
+    assert(&c, &["add", "group", "b", "b"])
+        .success();
+
+    assert(&c, &["remove", "group", "b"])
+        .success();
+
+    assert(&c, &["get", "group"])
+        .success()
+        .stdout("a\ta\n");
+}
